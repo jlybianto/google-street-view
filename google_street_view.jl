@@ -43,3 +43,26 @@ xTest = read_data("test", labelsInfoTest, imageSize, path)
 # Obtain the first character of a string
 yTrain = map(x -> x[1], labelsInfoTrain[:Class])
 yTrain = int(yTrain)
+
+# ----------------
+# MODEL DATA
+# ----------------
+
+Pkg.add("DecisionTree")
+
+using DecisionTree
+
+# Train (Build) Random Forest Classifier
+# Method: build_forest{T<:Float64,U<:Real}(::Array{T<:Float64,1}, ::Array{U<:Real,2}, ::Integer, ::Integer, ::Any)
+yTrain = float(yTrain)
+xTrain = float(xTrain)
+
+model = build_forest(yTrain, xTrain, 20, 50, 1.0)
+# Number of Chosen Features: 20
+# Number of Trees: 50
+# Ratio of Sub-Sampling: 1.0
+
+# Ensemble of Decision Trees
+# Trees: 50
+# Avg Leaves: 3164.84
+# Avg Depth: 37.98
