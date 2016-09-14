@@ -66,3 +66,16 @@ model = build_forest(yTrain, xTrain, 20, 50, 1.0)
 # Trees: 50
 # Avg Leaves: 3164.84
 # Avg Depth: 37.98
+
+# Predict the test dataset
+predict = apply_forest(model, xTest)
+labelsInfoTest[:Class] = map(char, predict)
+
+# Cross Validation
+accuracy = nfoldCV_forest(yTrain, xTrain, 20, 50, 4, 1.0); # n = 4 fold
+
+# ----------------
+# OUTPUT DATA
+# ----------------
+
+writetable("$(path)/submission_rfc.csv", labelsInfoTest, separator=',', header=True)
