@@ -45,7 +45,7 @@ yTrain = map(x -> x[1], labelsInfoTrain[:Class])
 yTrain = int(yTrain)
 
 # ----------------
-# MODEL DATA
+# MODEL DATA - RANDOM FOREST
 # ----------------
 
 Pkg.add("DecisionTree")
@@ -75,7 +75,22 @@ labelsInfoTest[:Class] = map(char, predict)
 accuracy = nfoldCV_forest(yTrain, xTrain, 20, 50, 4, 1.0); # n = 4 fold
 
 # ----------------
+# MODEL DATA - K-NEAREST NEIGHBOR
+# ----------------
+
+# Transpose dataset so columns represent data points and rows represent features.
+xTrain = xTrain'
+xTest = xTest'
+
+function euclidean_distance(a, b)
+	return dot(a-b, a-b)
+end
+
+# ----------------
 # OUTPUT DATA
 # ----------------
 
+# Random Forest Model Output
 writetable("$(path)/submission_rfc.csv", labelsInfoTest, separator=',', header=True)
+
+# K-Nearest Neighbor Output
