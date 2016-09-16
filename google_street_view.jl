@@ -83,7 +83,11 @@ xTrain = xTrain'
 xTest = xTest'
 
 function euclidean_distance(a, b)
-	return dot(a-b, a-b)
+	distance = 0.0
+	for index in 1:size(a, 1)
+		distance += (a[index]-b[index]) * (a[index]-b[index])
+	end
+	return distance
 end
 
 # ----------------
