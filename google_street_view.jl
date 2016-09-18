@@ -104,7 +104,7 @@ function get_k_nearest_neighbors(x, i, k)
 	imageI = Array(Float32, nRows)
 	imageJ = Array(Float32, nRows)
 
-	# Initialize an empty vecotr that will contain the distances between the i-th point.
+	# Initialize an empty vector that will contain the distances between the i-th point.
 	distances = Array(Float32, nCols)
 
 	for index in 1:nRows
@@ -126,6 +126,31 @@ function get_k_nearest_neighbors(x, i, k)
 	return kNearestNeighbors
 end
 
+# Function to assign a label to the i-th point according to the labels.
+# Training data is stored in the X matrix while the labels are stored in y.
+function assign_label(x, y, k, i)
+	kNearestNeighbors = get_k_nearest_neighbors(x, i, k)
+
+	# Dictionary to save the counts of the labels
+	counts = Dict{Int, Int}()
+
+	highestCount = 0
+	mostPopularLabel = 0
+
+	for n in kNearestNeighbors
+		labelOfN = y[n]
+		if !haskey(counts, labelOfN)
+			counts[labelOfN] = 0
+		end
+		counts[labelOfN] += 1
+
+		if counts[labelOfN] > highestCount
+			highestCount = counts[labelOfN]
+			mostPopularLabel = labelOfN
+		end
+	end
+	return mostPopularLabel
+end
 # ----------------
 # OUTPUT DATA
 # ----------------
