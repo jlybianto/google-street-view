@@ -8,6 +8,11 @@ Pkg.add("DataFrames")
 using Images
 using DataFrames
 
+# Add two parallel processes to the program to increase speed by approximately 2.
+# '@everywhere' is a macro to perform the parallelization added before each function.
+# '@parallel' is a macro added before each FOR loop.
+addprocs(2)
+
 # ----------------
 # PROFILE DATA
 # ----------------
@@ -94,7 +99,7 @@ xTest = xTest'
 
 # Loops are much slower in languages such as Python, R, and MATLAB.
 # The opposite is true for Julia: FOR loops can be faster than vectorized operations.
-function euclidean_distance(a, b)
+@everywhere function euclidean_distance(a, b)
 	distance = 0.0
 	for index in 1:size(a, 1)
 		distance += (a[index]-b[index]) * (a[index]-b[index])
@@ -103,26 +108,21 @@ function euclidean_distance(a, b)
 end
 
 # Function to find the k-nearest neighbor of the i-th data point.
-function get_k_nearest_neighbors(x, i, k)
-	nRows, nCols = size(x)
+@everywhere function get_k_nearest_neighbors(xTrain, imageI, k)
+	nRows, nCols = size(xTrain)
 
 	# Initialize a vector imageI so that it is accessed only once from the X matrix.
 	# Filling an empty vector with each element is faster than copying entire vector.
 	# Create empty array of nRows elements of type Float32 (decimal).
-	imageI = Array(Float32, nRows)
 	imageJ = Array(Float32, nRows)
 
 	# Initialize an empty vector that will contain the distances between the i-th point.
 	distances = Array(Float32, nCols)
 
-	for index in 1:nRows
-		imageI[index] = x[index, i]
-	end
-
 	for j in 1:nCols
 		# Loop to fill the vector imageJ with the j-th data point.
 		for index in 1:nRows
-			imageJ[index] = x[index, j]
+			imageJ[index] = xTrain[index, j]
 		end
 		distances[j] = euclidean_distance(imageI, imageJ)
 	end
@@ -130,14 +130,14 @@ function get_k_nearest_neighbors(x, i, k)
 	sortedNeighbors = sortperm(distances)
 
 	# Select the second closest neighbor since the calculated closest is i-th to itself.
-	kNearestNeighbors = sortedNeighbors[2:k+1]
+	kNearestNeighbors = sortedNeighbors[1:k]
 	return kNearestNeighbors
 end
 
 # Function to assign a label to the i-th point according to the labels.
 # Training data is stored in the X matrix while the labels are stored in y.
-function assign_label(x, y, k, i)
-	kNearestNeighbors = get_k_nearest_neighbors(x, i, k)
+@everywhere function assign_label(xTrain, yTrain, k, imageI)
+	kNearestNeighbors = get_k_nearest_neighbors(xTrain, imageI, k)
 
 	# Dictionary to save the counts of the labels
 	counts = Dict{Int, Int}()
@@ -147,7 +147,7 @@ function assign_label(x, y, k, i)
 
 	# Iterate over the labels of the k-nearest neighbor
 	for n in kNearestNeighbors
-		labelOfN = y[n]
+		labelOfN = yTrain[n]
 		# Add the current label to the dictionary if it is not already there
 		if !haskey(counts, labelOfN)
 			counts[labelOfN] = 0
@@ -162,6 +162,22 @@ function assign_label(x, y, k, i)
 	end
 	return mostPopularLabel
 end
+
+# Define k
+k = 3
+
+# Run predictive modeling
+yPredictions = @parallel (vcat) for i in 1:size(xTest, 2)
+	nRows = size(xTrain, 1)
+	imageI = Array(Float32, nRows)
+	for index in 1:nRows
+		imageI[index] = xTeset[index, i]
+	end
+	assign_label(xTrain, yTrain, k, imageI)
+end
+
+# Convert integer predictions into character type
+labelsInfoTest[:Class] = map(Char, yPredictions)
 
 # ----------------
 # OUTPUT DATA
