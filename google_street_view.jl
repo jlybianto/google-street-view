@@ -22,20 +22,28 @@ path = "C:\\Users\\Jesse Lybianto\\Documents\\Kaggle\\First Steps With Julia"
 labelsInfoTrain = readtable("$(path)/trainLabels.csv")
 labelsInfoTest = readtable("$(path)/sampleSubmission.csv")
 
+# Function to store each image in a matrix
 function read_data(typeData, labelsInfo, imageSize, path)
+	# Initialize matrix
 	x = zeros(size(labelsInfo, 1), imageSize)
+
 	for (index, idImage) in enumerate(labelsInfo[:ID])
+
+		# Read image file through location specification
 		nameFile = "$(path)/$(typeData)Resized/$(idImage).Bmp"
 		img = load(nameFile)
 
+		# Convert image to gray colors
 		temp = convert(Image{Images.Gray}, img)
-
 		if ndims(temp) == 3
 			temp = mean(temp.data, 1)
 		end
 
+		# Transform image matrix to a vector to be stored
 		x[index, :] = reshape(temp, 1, imageSize)
 	end
+	return x
+end
 
 xTrain = read_data("train", labelsInfoTrain, imageSize, path)
 xTest = read_data("test", labelsInfoTest, imageSize, path)
@@ -137,11 +145,14 @@ function assign_label(x, y, k, i)
 	highestCount = 0
 	mostPopularLabel = 0
 
+	# Iterate over the labels of the k-nearest neighbor
 	for n in kNearestNeighbors
 		labelOfN = y[n]
+		# Add the current label to the dictionary if it is not already there
 		if !haskey(counts, labelOfN)
 			counts[labelOfN] = 0
 		end
+		# Add one to the count
 		counts[labelOfN] += 1
 
 		if counts[labelOfN] > highestCount
@@ -151,11 +162,13 @@ function assign_label(x, y, k, i)
 	end
 	return mostPopularLabel
 end
+
 # ----------------
 # OUTPUT DATA
 # ----------------
 
 # Random Forest Model Output
-writetable("$(path)/submission_rfc.csv", labelsInfoTest, separator=',', header=True)
+writetable("$(path)/submission_rfc.csv", labelsInfoTest, separator=',', header=true)
 
 # K-Nearest Neighbor Output
+writetable("$(path)/submission_knn.csv", labelsInfoTest, separator=',', header=true)
